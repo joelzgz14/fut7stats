@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraSport AI Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --light-gray: #f1f5f9;
+            --medium-gray: #e2e8f0;
+            --text-light: #64748b;
+            --text-dark: #1e293b;
+            --white: #ffffff;
+            --animation-speed: 0.15s;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-gray);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--text-dark);
+        }
+        #main-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 24px;
+            width: 95%;
+            max-width: 1400px;
+            height: 95vh;
+            max-height: 900px;
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+            border: 1px solid var(--medium-gray);
+        }
+        .panel-header {
+            text-align: center;
+            font-weight: 700;
+            padding: 20px;
+            margin: 0;
+            border-bottom: 1px solid var(--medium-gray);
+            font-size: 20px;
+            background: linear-gradient(to top, #fafbfe, #ffffff);
+        }
+        #chat-window { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .message { padding: 12px 18px; border-radius: 20px; max-width: 85%; line-height: 1.6; animation: slideInUp 0.4s ease-out; }
+        .user-message { background-color: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .agent-message { background-color: #eef2ff; color: var(--text-dark); align-self: flex-start; border-bottom-left-radius: 5px; }
+        #input-form { display: flex; padding: 16px; border-top: 1px solid var(--medium-gray); gap: 10px; background-color: #fafbfe; }
+        #prompt-input { flex-grow: 1; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px 16px; font-size: 16px; font-family: 'Inter', sans-serif; transition: all 0.2s ease; }
+        #prompt-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+        #input-form button { background-color: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0 24px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        #input-form button:hover { background-color: var(--primary-hover); }
+        #data-content { flex-grow: 1; padding: 24px; overflow-y: auto; transition: opacity var(--animation-speed) ease; }
+        #data-content.fade-out { opacity: 0; }
+        #teams-list ul { list-style: none; padding: 0; margin: 0; }
+        #teams-list li { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--medium-gray); cursor: pointer; transition: background-color 0.2s, color 0.2s; font-weight: 500;}
+        #teams-list li.active, #teams-list li:hover { background-color: #eef2ff; color: var(--primary-color); }
+        .view-title { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        .back-button { margin-bottom: 20px; cursor: pointer; color: var(--primary-color); font-weight: 600; display: inline-block; padding: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 14px; border-bottom: 1px solid var(--medium-gray); vertical-align: middle; }
+        th { background-color: #f8fafc; font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 12px; }
+        tbody tr:hover { background-color: #fafafa; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--medium-gray); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 80px auto; }
+
+        /* Keyframes para las animaciones */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .data-view { animation: slideInUp 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+
+        #c-jazu-animation {
+    position: fixed; /* Se posiciona sobre toda la página */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5); /* Empieza pequeño */
+    background-color: rgba(17, 24, 39, 0.85);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 12px;
+    font-size: 48px;
+    font-weight: 700;
+    z-index: 1000; /* Para que esté por encima de todo */
+    opacity: 0; /* Empieza invisible */
+    pointer-events: none; /* No interfiere con los clics */
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Transición suave */
+}
+
+#c-jazu-animation.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Crece a su tamaño normal */
+}
+    </style>
+</head>
+<body>
+
+<div id="main-container">
+    <div id="chat-panel" class="panel">
+        <h1 class="panel-header">Correas AI</h1>
+        <div id="chat-window"></div>
+        <form id="input-form">
+            <input type="text" id="prompt-input" placeholder="Ej: Crea un equipo..." autocomplete="off">
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+    <div id="data-panel" class="panel">
+        <h1 class="panel-header">Datos de la Aplicación</h1>
+        <div id="data-content"></div>
+    </div>
+</div>
+
+<script>
+    // --- Referencias a elementos del DOM ---
+    const chatForm = document.getElementById('input-form');
+    const promptInput = document.getElementById('prompt-input');
+    const chatWindow = document.getElementById('chat-window');
+    const dataContent = document.getElementById('data-content');
+
+    // --- (NUEVO) Crear el elemento de la animación al cargar la página ---
+    const jazuAnimation = document.createElement('div');
+    jazuAnimation.id = 'c-jazu-animation';
+    jazuAnimation.innerText = '¡Correazo a Jazu!';
+    document.body.appendChild(jazuAnimation);
+
+    // --- (NUEVO) Función para activar la animación ---
+    function triggerJazuAnimation() {
+        jazuAnimation.classList.add('show');
+        setTimeout(() => {
+            jazuAnimation.classList.remove('show');
+        }, 2000);
+    }
+
+    // --- Iconos SVG ---
+    const ICONS = {
+        TEAM: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+        PLAYERS: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M15.5 9.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"></path><path d="M12 14.2c-2.76 0-5 1.79-5 4"></path><path d="M17 18.2c0-2.21-2.24-4-5-4"></path></svg>`,
+        MATCHES: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+    };
+
+    // --- Lógica del Chat ---
+    function addMessage(text, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'agent-message');
+        messageElement.innerText = text;
+        chatWindow.appendChild(messageElement);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const userPrompt = promptInput.value.trim();
+        if (!userPrompt) return;
+        addMessage(userPrompt, 'user');
+        promptInput.value = '';
+        try {
+            const response = await fetch('/api/v1/ai/prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: userPrompt }),
+            });
+            if (!response.ok) throw new Error('Error del servidor');
+
+            const agentResponseText = await response.text();
+            addMessage(agentResponseText, 'agent');
+
+            const lowerCaseResponse = agentResponseText.toLowerCase();
+            if (lowerCaseResponse.includes('creado') || lowerCaseResponse.includes('añadido') || lowerCaseResponse.includes('actualizado')) {
+                triggerJazuAnimation();
+            }
+
+            await fetchAndDisplayTeams(true);
+
+        } catch (error) {
+            console.error('Error:', error);
+            addMessage('Ha ocurrido un error.', 'agent');
+        }
+    });
+
+    // --- Lógica del Panel de Datos ---
+    dataContent.addEventListener('click', (event) => {
+        const teamItem = event.target.closest('li[data-team-id]');
+        if (teamItem) {
+            const teamId = teamItem.dataset.teamId;
+            const teamName = teamItem.dataset.teamName;
+            document.querySelectorAll('#teams-list li').forEach(li => li.classList.remove('active'));
+            teamItem.classList.add('active');
+            showTeamDetailView(teamId, teamName);
+            return;
+        }
+
+        const backButton = event.target.closest('.back-button');
+        if (backButton) {
+            fetchAndDisplayTeams();
+        }
+    });
+
+    function renderView(html) {
+        dataContent.classList.add('fade-out');
+        setTimeout(() => {
+            dataContent.innerHTML = html;
+            dataContent.classList.remove('fade-out');
+        }, 150);
+    }
+
+    async function fetchAndDisplayTeams(keepSelection = false) {
+        const activeTeamId = document.querySelector('#teams-list li.active')?.dataset.teamId;
+        if (!keepSelection) renderView(`<div class="spinner"></div>`);
+
+        try {
+            const response = await fetch('/api/v1/equipos');
+            const teams = await response.json();
+            const teamsHtml = `
+                <div id="teams-list" class="data-view">
+                    <div class="view-title">${ICONS.TEAM} Equipos Registrados</div>
+                    <ul>
+                        ${teams.length > 0 ? teams.map(team => `<li data-team-id="${team.id}" data-team-name="${team.nombreEquipo}" class="${team.id == activeTeamId ? 'active' : ''}">${team.nombreEquipo}</li>`).join('') : `<li>No hay equipos. Usa el chat para crear uno.</li>`}
+                    </ul>
+                </div>`;
+
+            if (!keepSelection) {
+                renderView(teamsHtml);
+            } else {
+                // Si es un refresco, no hacemos la animación de fundido para evitar parpadeos
+                dataContent.innerHTML = teamsHtml;
+            }
+        } catch (error) {
+            console.error("Error al cargar equipos:", error);
+            renderView("<p>No se pudieron cargar los equipos.</p>");
+        }
+    }
+
+    async function showTeamDetailView(teamId, teamName) {
+        renderView(`<div class="spinner"></div>`);
+        try {
+            const [playersResponse, matchesResponse] = await Promise.all([
+                fetch(`/api/v1/jugadores?equipoId=${teamId}`),
+                fetch(`/api/v1/partidos?equipoId=${teamId}`)
+            ]);
+            if (!playersResponse.ok || !matchesResponse.ok) throw new Error('Failed to fetch team details');
+            const players = await playersResponse.json();
+            const matches = await matchesResponse.json();
+
+            const detailHtml = `
+                <div class="data-view">
+                    <div class="back-button">← Volver a Equipos</div>
+                    <div class="view-title">${ICONS.TEAM} ${teamName}</div>
+                    <div class="view-title" style="font-size: 18px; margin-top: 20px;">${ICONS.PLAYERS} Plantilla</div>
+                    <table>
+                        <thead><tr><th>Apodo</th><th>Posición</th><th>Goles</th><th>Asist.</th></tr></thead>
+                        <tbody>
+                            ${players.length > 0 ? players.map(p => `<tr><td>${p.apodo||'-'}</td><td>${p.posicion||'-'}</td><td>${p.totalGoles}</td><td>${p.totalAsistencias}</td></tr>`).join('') : `<tr><td colspan="4">No hay jugadores en este equipo.</td></tr>`}
+                        </tbody>
+                    </table>
+                    <div class="view-title" style="font-size: 18px; margin-top: 30px;">${ICONS.MATCHES} Partidos</div>
+                    <table>
+                        <thead><tr><th>Rival</th><th>Resultado</th><th>Fecha</th></tr></thead>
+                        <tbody>
+                            ${matches.length > 0 ? matches.map(m => `<tr><td>${m.rival}</td><td>${m.golesFavor} - ${m.golesContra}</td><td>${new Date(m.fechaPartido).toLocaleDateString('es-ES')}</td></tr>`).join('') : `<tr><td colspan="3">No hay partidos registrados.</td></tr>`}
+                        </tbody>
+                    </table>
+                </div>`;
+            renderView(detailHtml);
+        } catch (error) {
+            console.error(`Error al cargar los detalles para el equipo ${teamId}:`, error);
+            renderView(`<p>No se pudieron cargar los detalles.</p>`);
+        }
+    }
+
+    // --- Carga Inicial ---
+    addMessage('¡Hola! Soy tu asistente de AuraSport. ¿Qué necesitas hacer hoy?', 'agent');
+    fetchAndDisplayTeams();
+</script>
+
+</body>
+</html>
