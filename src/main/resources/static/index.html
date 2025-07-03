@@ -104,13 +104,28 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(1); /* Crece a su tamaño normal */
 }
+
+        /* Añade esto al final de tu sección <style> */
+#teams-list li {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.team-logo {
+    width: 60px;
+    height: 40px;
+    object-fit: contain; /* Usa 'contain' para que el logo no se deforme */
+    border-radius: 4px;
+    background-color: #f0f2f5;
+}
     </style>
 </head>
 <body>
 
 <div id="main-container">
     <div id="chat-panel" class="panel">
-        <h1 class="panel-header">Correas AI</h1>
+        <h1 class="panel-header">Fut7Stats AI</h1>
         <div id="chat-window"></div>
         <form id="input-form">
             <input type="text" id="prompt-input" placeholder="Ej: Crea un equipo..." autocomplete="off">
@@ -217,31 +232,35 @@
     }
 
     async function fetchAndDisplayTeams(keepSelection = false) {
-        const activeTeamId = document.querySelector('#teams-list li.active')?.dataset.teamId;
-        if (!keepSelection) renderView(`<div class="spinner"></div>`);
+    const activeTeamId = document.querySelector('#teams-list li.active')?.dataset.teamId;
+    if (!keepSelection) renderView(`<div class="spinner"></div>`);
 
-        try {
-            const response = await fetch('/api/v1/equipos');
-            const teams = await response.json();
-            const teamsHtml = `
-                <div id="teams-list" class="data-view">
-                    <div class="view-title">${ICONS.TEAM} Equipos Registrados</div>
-                    <ul>
-                        ${teams.length > 0 ? teams.map(team => `<li data-team-id="${team.id}" data-team-name="${team.nombreEquipo}" class="${team.id == activeTeamId ? 'active' : ''}">${team.nombreEquipo}</li>`).join('') : `<li>No hay equipos. Usa el chat para crear uno.</li>`}
-                    </ul>
-                </div>`;
+    try {
+        const response = await fetch('/api/v1/equipos');
+        const teams = await response.json();
+        const teamsHtml = `
+            <div id="teams-list" class="data-view">
+                <div class="view-title">${ICONS.TEAM} Equipos Registrados</div>
+                <ul>
+                    ${teams.length > 0 ? teams.map(team => `
+                        <li data-team-id="${team.id}" data-team-name="${team.nombreEquipo}" class="${team.id == activeTeamId ? 'active' : ''}">
+                            <img class="team-logo" src="${team.imagenUrl || 'https://via.placeholder.com/100x60?text=Sin+Escudo'}" alt="Escudo">
+                            <span>${team.nombreEquipo}</span>
+                        </li>
+                    `).join('') : `<li>No hay equipos. Usa el chat para crear uno.</li>`}
+                </ul>
+            </div>`;
 
-            if (!keepSelection) {
-                renderView(teamsHtml);
-            } else {
-                // Si es un refresco, no hacemos la animación de fundido para evitar parpadeos
-                dataContent.innerHTML = teamsHtml;
-            }
-        } catch (error) {
-            console.error("Error al cargar equipos:", error);
-            renderView("<p>No se pudieron cargar los equipos.</p>");
+        if (!keepSelection) {
+            renderView(teamsHtml);
+        } else {
+            dataContent.innerHTML = teamsHtml;
         }
+    } catch (error) {
+        console.error("Error al cargar equipos:", error);
+        renderView("<p>No se pudieron cargar los equipos.</p>");
     }
+}
 
     async function showTeamDetailView(teamId, teamName) {
         renderView(`<div class="spinner"></div>`);

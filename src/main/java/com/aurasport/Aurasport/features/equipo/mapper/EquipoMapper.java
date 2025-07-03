@@ -14,6 +14,7 @@ public class EquipoMapper {
         }
         Equipo equipo = new Equipo();
         equipo.setNombreEquipo(request.nombreEquipo());
+        equipo.setImagenUrl(request.imagenUrl()); //
         return equipo;
     }
 
@@ -21,6 +22,6 @@ public class EquipoMapper {
         if (equipo == null) {
             return null;
         }
-        return new EquipoResponse(equipo.getId(), equipo.getNombreEquipo());
+        return new EquipoResponse(equipo.getId(), equipo.getNombreEquipo(), equipo.getImagenUrl());
     }
 }

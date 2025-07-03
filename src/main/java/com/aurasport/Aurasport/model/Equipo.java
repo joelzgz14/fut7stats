@@ -20,4 +20,7 @@ public class Equipo {
 
     @Column(name = "fecha_creacion", updatable = false)
     private OffsetDateTime fechaCreacion = OffsetDateTime.now();
+
+    @Column(name = "imagen_url") // NUEVO CAMPO
+    private String imagenUrl;
 }

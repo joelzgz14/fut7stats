@@ -2,6 +2,7 @@ package com.aurasport.Aurasport.features.equipo.service;
 
 import com.aurasport.Aurasport.features.equipo.dto.CreateEquipoRequest;
 import com.aurasport.Aurasport.features.equipo.dto.EquipoResponse;
+import com.aurasport.Aurasport.features.equipo.dto.UpdateEquipoRequest;
 import com.aurasport.Aurasport.features.equipo.mapper.EquipoMapper;
 import com.aurasport.Aurasport.features.equipo.repository.EquipoRepository;
 import com.aurasport.Aurasport.model.Equipo;
@@ -50,5 +51,27 @@ public class EquipoService {
         return equipoRepository.findById(id)
                 .map(equipoMapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Equipo no encontrado con id: " + id)); // Más adelante crearemos excepciones personalizadas
+    }
+
+    @Transactional
+    public EquipoResponse update(Long equipoId, UpdateEquipoRequest request) {
+        // 1. Buscamos el equipo
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new RuntimeException("Equipo no encontrado con id: " + equipoId));
+
+        // 2. Actualizamos solo los campos que vienen en la petición
+        request.nombreEquipo().ifPresent(equipo::setNombreEquipo);
+        request.imagenUrl().ifPresent(equipo::setImagenUrl);
+
+        // 3. Guardamos y devolvemos la respuesta
+        Equipo equipoActualizado = equipoRepository.save(equipo);
+        return equipoMapper.toResponse(equipoActualizado);
+    }
+
+    @Transactional(readOnly = true)
+    public EquipoResponse findByNombre(String nombreEquipo) {
+        return equipoRepository.findByNombreEquipo(nombreEquipo)
+                .map(equipoMapper::toResponse)
+                .orElseThrow(() -> new RuntimeException("No se encontró un equipo llamado '" + nombreEquipo + "'."));
     }
 }
