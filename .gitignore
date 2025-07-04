@@ -30,3 +30,7 @@ out/
 .idea/
 *.iml
 *.iws
+
+# Gradle
+.gradle/
+build/

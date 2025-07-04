@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  # Definimos el servicio de nuestra base de datos
+  db:
+    image: postgres:15-alpine
+    container_name: fut7stats_db
+    environment:
+      POSTGRES_DB: fut7_db
+      POSTGRES_USER: aurasport_user
+      POSTGRES_PASSWORD: WanderLust8!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
