@@ -26,7 +26,7 @@ public class AIConfig {
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openaiApiKey)
-                .modelName("gpt-4o")
+                .modelName("gpt-3.5-turbo") // Puedes cambiar a "gpt-4" si tienes acceso)
                 .timeout(Duration.ofSeconds(60))
                 .build();
     }
