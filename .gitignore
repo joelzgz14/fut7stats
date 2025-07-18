@@ -34,3 +34,6 @@ out/
 # Gradle
 .gradle/
 build/
+
+# Application Properties (custom addition)
+application.properties
